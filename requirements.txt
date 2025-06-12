@@ -1,0 +1,13 @@
+requests
+python-telegram-bot
+joblib
+paho-mqtt
+pandas
+python-slugify
+google-cloud-firestore
+numpy
+matplotlib
+scikit-learn
+plotly
+flask
+flask_mqtt

@@ -1,0 +1,366 @@
+<!DOCTYPE HTML> <!-- Definisce il tipo di documento HTML5 -->
+<html>
+  <head>
+    <title>SMARK</title> <!-- Titolo della pagina -->
+    <meta charset="utf-8" /> <!-- Set di caratteri UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" /> <!-- Configura il layout responsive -->
+
+    <!-- Foglio di stile Leaflet (mappa) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+
+    <!-- Foglio di stile personalizzato dal server Flask -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/main.css') }}" />
+
+    <!-- Foglio di stile alternativo per browser senza JavaScript -->
+    <noscript>
+      <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/noscript.css') }}" />
+    </noscript>
+
+    <!-- Inserisce la variabile JS con l'URL al grafico -->
+    <script>
+      const graphUrl = "{{ url_for('graph_nott') }}";
+    </script>
+
+
+     
+  </head>
+
+  <body class="is-preload"> <!-- Corpo della pagina con classe per effetti iniziali -->
+
+    <div id="wrapper"> <!-- Wrapper per il contenuto principale -->
+
+      <!-- Header con logo -->
+      <header id="header">
+        <a href="{{ url_for('index') }}" class="logo"><strong>TROVA</strong> <span>il tuo parcheggio</span></a>
+      </header>
+
+      <!-- Contenuto principale -->
+      <div id="main" class="alt">
+        <section id="one">
+          <div class="inner">
+            <a href="{{ url_for('map') }}" style="display:inline-block; margin-bottom: 1rem; font-size: 1rem;">← Torna alla mappa</a>
+
+            <!-- Titolo sezione -->
+            <header class="major">
+              <h1>Mappa Parcheggi – Nottingham</h1>
+
+              <!-- Sezione per la selezione di giorno, orario e parcheggio -->
+              <div class="average-global" style="margin: 1rem 8; display: flex; align-items: center; gap: 3.7rem; margin-bottom: 3rem;">
+
+                <!-- Giorno della settimana -->
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label for="globalDay"><strong>Giorno:</strong></label><br>
+                  <select id="globalDay">
+                    <option value="Lunedì">Lunedì</option>
+                    <option value="Martedì">Martedì</option>
+                    <option value="Mercoledì">Mercoledì</option>
+                    <option value="Giovedì">Giovedì</option>
+                    <option value="Venerdì">Venerdì</option>
+                    <option value="Sabato">Sabato</option>
+                    <option value="Domenica">Domenica</option>
+                  </select>
+                </div>
+
+                <!-- Orario -->
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label for="globalTime"><strong>Orario:</strong></label><br>
+                  <input type="time" id="globalTime" value="12:00" style="background-color:#fff;color:#000;" />
+                </div>
+
+                <!-- Selezione parcheggio -->
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label for="globalPark"><strong>Parcheggio:</strong></label><br>
+                  <select id="globalPark">
+                    <!-- Opzioni di parcheggi statiche -->
+                    <option value="210">210</option>
+                    <option value="211">211</option>
+                    <option value="212">212</option>
+                    <option value="911">911</option>
+                    <option value="Am2-1">Am2-1</option>
+                    <option value="Am3-2">Am3-2</option>
+                    <option value="BRDMAR">BRDMAR</option>
+                    <option value="BRDMSH">BRDMSH</option>
+                    <option value="C11001">C11001</option>
+                    <option value="C11002">C11002</option>
+                    <option value="C11004">C11004</option>
+                    <option value="C11005">C11005</option>
+                    <option value="C11006">C11006</option>
+                    <option value="C12002">C12002</option>
+                    <option value="CPM_22">CPM_22</option>
+                    <option value="FRSTPR">FRSTPR</option>
+                    <option value="LACEMK">LACEMK</option>
+                    <option value="PHNXPR">PHNXPR</option>
+                    <option value="PRLMNT">PRLMNT</option>
+                    <option value="QNSPR">QNSPR</option>
+                    <option value="RYLCT">RYLCT</option>
+                    <option value="SB1-1">SB1-1</option>
+                    <option value="TRINSQ">TRINSQ</option>
+                    <option value="VICNTH">VICNTH</option>
+                    <option value="VICSTH">VICSTH</option>
+                    <option value="C11007">C11007</option>
+                  </select>
+                </div>
+
+                <!-- Bottone per aggiornare mappa -->
+                <button id="updateMarkers" style="align-self: center;">Aggiorna mappa</button>
+              </div>
+             
+
+              <!-- Sezione aggiuntiva per Forecast -->
+              <div class="forecast-controls" style="margin: 4rem 8; display: flex; align-items: center; gap: 3.7rem; border-top: 1px soli #ddd;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label for="forecastDate"><strong>Data Previsione:</strong></label><br>
+                  <input type="date" id="forecastDate" style="background-color:#fff;color:#000;"max="2017-12-28" />
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label for="forecastTime"><strong>Orario Previsione:</strong></label><br>
+                  <input type="time" id="forecastTime" value="12:00" style="background-color:#fff;color:#000;" step="3600" />
+                </div>
+                <button id="showForecast" style="align-self: center;">Mostra Previsione</button>
+              </div>
+
+              
+            </header>
+              
+            <!-- Contenitore della mappa -->
+            <div id="mapid" style="width:100%; height:400px; margin-top:2rem;"></div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- Script Leaflet per mappa -->
+      <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+
+      <!-- Script JS principale -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+          // Inizializza la mappa centrata su Nottingham
+          const map = L.map('mapid').setView([52.9548, -1.1581], 15);
+
+          // Aggiunge layer delle mappe da OpenStreetMap
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+          // Array con parcheggi e coordinate
+          const cities = [
+          { name: "210", coords: [52.9560, -1.1605] },
+          { name: "211", coords: [52.9532, -1.1570] },
+          { name: "212", coords: [52.9555, -1.1550] },
+          { name: "911", coords: [52.9540, -1.1615] },
+          { name: "Am2-1", coords: [52.9565, -1.1562] },
+          { name: "Am3-2", coords: [52.9537, -1.1601] },
+          { name: "BRDMAR", coords: [52.9525, -1.1590] },
+          { name: "BRDMSH", coords: [52.9550, -1.1628] },
+          { name: "C11001", coords: [52.9572, -1.1575] },
+          { name: "C11002", coords: [52.9519, -1.1558] },
+          { name: "C11004", coords: [52.9546, -1.1620] },
+          { name: "C11005", coords: [52.9568, -1.1543] },
+          { name: "C11006", coords: [52.9530, -1.1625] },
+          { name: "C12002", coords: [52.9570, -1.1598] },
+          { name: "CPM_22", coords: [52.9558, -1.1535] },
+          { name: "FRSTPR", coords: [52.9515, -1.1600] },
+          { name: "LACEMK", coords: [52.9563, -1.1611] },
+          { name: "PHNXPR", coords: [52.9541, -1.1530] },
+          { name: "PRLMNT", coords: [52.9575, -1.1557] },
+          { name: "QNSPR", coords: [52.9527, -1.1587] },
+          { name: "RYLCT", coords: [52.9518, -1.1575] },
+          { name: "SB1-1", coords: [52.9539, -1.1552] },
+          { name: "TRINSQ", coords: [52.9552, -1.1609] },
+          { name: "VICNTH", coords: [52.9566, -1.1580] },
+          { name: "VICSTH", coords: [52.9540, -1.1565] },
+          { name: "C11007", coords: [52.9522, -1.1608] }
+      ];
+
+          // Oggetto per memorizzare i marker
+          const markers = {};
+
+          // Icona di default
+          const defaultIcon = L.icon({
+            iconUrl: '/static/images/parking.png',
+            iconSize: [20,20],
+            iconAnchor: [16,32],
+            popupAnchor: [0,-32]
+          });
+
+          // Icona selezionata
+          const selectedIcon = L.icon({
+            iconUrl: '/static/images/parking.png',
+            iconSize: [32,32],
+            iconAnchor: [16,32],
+            popupAnchor: [0,-32]
+          });
+
+          // Aggiunge i marker alla mappa
+          cities.forEach(city => {
+            const m = L.marker(city.coords, { icon: defaultIcon }).addTo(map);
+            m.bindPopup(
+              `<div style="color: #000;"> 
+                <strong>ID Parcheggio:</strong> ${city.name}<br>
+                
+              </div>`
+            );
+            markers[city.name] = m;
+          });
+
+              // Forziamo step di un’ora e azzeramento automatico dei minuti
+              const forecastTimeInput = document.getElementById('forecastTime');
+              forecastTimeInput.setAttribute('step', '3600');
+              forecastTimeInput.addEventListener('change', () => {
+                const [h, m] = forecastTimeInput.value.split(':').map(Number);
+                if (m !== 0) {
+                  const hh = String(h).padStart(2, '0');
+                  forecastTimeInput.value = `${hh}:00`;
+                }
+              });
+
+          // Funzione per aggiornare media storica
+          async function refreshAverages() {
+            const day  = document.getElementById('globalDay').value.toLowerCase();
+            const time = document.getElementById('globalTime').value;
+            const park = document.getElementById('globalPark').value;
+
+            if (!time || !park) {
+              alert("Seleziona sia orario che parcheggio.");
+              return;
+            }
+
+            // Aggiorna icone sulla mappa
+            Object.entries(markers).forEach(([parkId, marker]) => {
+              if (parkId === park) {
+                marker.setIcon(selectedIcon);
+                marker.openPopup();
+              } else {
+                marker.setIcon(defaultIcon);
+                marker.closePopup();
+              }
+            });
+
+            // Costruisce parametri della richiesta
+            const params = new URLSearchParams({ day, time });
+
+            try {
+              const res  = await fetch(`/average_availability/nottingham?${params.toString()}&_=${Date.now()}`);
+              const data = await res.json();
+
+              const info = data[park];
+              if (markers[park]) {
+                const pred = (info && info.average !== null) ? `${Math.round(info.average)} posti` : 'n.d.';
+                markers[park].setPopupContent(
+                  `<a href="${graphUrl}?parkId=${encodeURIComponent(park)}"; style="text-decoration:none;">
+                    <div style="font-family: Arial, sans-serif; padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #E0FFFF; color: #000000;">
+                      <div style="font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #000000;">${park}</div>
+                      <div><strong style="color: #000000;">Giorno:</strong> ${day}</div>
+                      <div><strong style="color: #000000;">Orario:</strong> ${time}</div>
+                      <div><strong style="color: #000000;">Disponibilità media:</strong> ${pred}</div>
+                    </div>
+                  </a>`
+                );
+                markers[park].openPopup();
+              }
+
+            } catch (err) {
+              console.error('Errore caricamento media', err);
+            }
+          }
+        
+          // Funzione per aggiornare i marker in base alla forecast (futuro)
+          async function refreshForecast() {
+            const date  = document.getElementById('forecastDate').value; // “YYYY-MM-DD”
+            const time  = document.getElementById('forecastTime').value; // “HH:MM”
+            const park  = document.getElementById('globalPark').value;   // parcheggio selezionato
+
+            if (!date || !time) {
+              alert("Seleziona sia data che ora per la previsione.");
+              return;
+            }
+
+           // Richiesta al nuovo endpoint /forecast_extended/nottingham/<park>
+try {
+  const res = await fetch(`/forecast_extended/nottingham/${park}?date=${date}&time=${time}`);
+  const data = await res.json();
+
+  // Prendi la previsione dal JSON
+  let pred = null;
+  if (data.forecast && data.forecast.length > 0) {
+    pred = data.forecast[0].forecast;
+  }
+
+  // Aggiorna solo il marker selezionato
+  Object.entries(markers).forEach(([parkId, marker]) => {
+    if (parkId === park && pred !== null) {
+      let color = "#808080";
+      if (pred < 10) color = "#d73027";
+      else if (pred < 30) color = "#fee08b";
+      else color = "#1a9850";
+
+      if (marker._forecastCircle) {
+        map.removeLayer(marker._forecastCircle);
+      }
+      const circle = L.circle(marker.getLatLng(), {
+        radius: 80,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.5
+      }).addTo(map);
+      marker._forecastCircle = circle;
+
+     marker.setPopupContent(
+        `<a href="${graphUrl}?parkId=${encodeURIComponent(parkId)}" style="text-decoration:none;">
+          <div style="font-family: Arial, sans-serif; padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #ffb3b3; color: #000000;">
+            <div style="font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #000000;">${parkId}</div>
+            <div><strong style="color: #000000;">Data:</strong> ${date}</div>
+            <div><strong style="color: #000000;">Orario:</strong> ${time}</div>
+            <div><strong style="color: #000000;">Previsione:</strong> ${pred} posti</div>
+          </div>
+        </a>`
+      );
+      marker.openPopup();
+    } else {
+      // Rimuovi eventuale forecastCircle e ripristina icona standard
+      if (marker._forecastCircle) {
+        map.removeLayer(marker._forecastCircle);
+        marker._forecastCircle = null;
+      }
+      marker.setIcon(defaultIcon);
+      marker.closePopup();
+    }
+  });
+} catch (err) {
+  console.error("Errore caricamento forecast:", err);
+}
+          }
+
+          // Collega bottone e chiama inizialmente
+          document.getElementById('updateMarkers').addEventListener('click', refreshAverages);
+          document.getElementById('showForecast').addEventListener('click', refreshForecast);
+
+          refreshAverages();
+        });
+      </script>
+
+      <!-- Footer con icone social -->
+      <footer id="footer">
+        <div class="inner">
+          <ul class="icons">
+            <li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+            <li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+            <li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+            <li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+            <li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+          </ul>
+        </div>
+      </footer>
+
+    </div> <!-- Fine wrapper -->
+
+    <!-- Script JS vari per effetti e funzionalità -->
+    <script src="../static/assets/js/jquery.min.js"></script>
+    <script src="../static/assets/js/jquery.scrolly.min.js"></script>
+    <script src="../static/assets/js/jquery.scrollex.min.js"></script>
+    <script src="../static/assets/js/browser.min.js"></script>
+    <script src="../static/assets/js/breakpoints.min.js"></script>
+    <script src="../static/assets/js/util.js"></script>
+    <script src="../static/assets/js/main.js"></script>
+  </body>
+</html>

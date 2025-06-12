@@ -1,0 +1,4 @@
+#ciò che non voglio condividere su github
+venv/
+secret.py
+credentials.json

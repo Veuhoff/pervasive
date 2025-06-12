@@ -1,0 +1,277 @@
+<!DOCTYPE HTML>
+<!-- Definisce il tipo di documento come HTML -->
+
+<html>
+<head>
+    <title>SMARK</title>
+    <!-- Titolo della pagina -->
+
+    <meta charset="utf-8" />
+    <!-- Charset UTF-8 per supportare caratteri internazionali -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <!-- Impostazioni viewport per responsive design, disabilita zoom -->
+
+    <link rel="stylesheet" href="../static/assets/css/main.css" />
+    <!-- Collega il file CSS principale -->
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> <!--Carica la libreria Google Charts.-->
+    <!-- Importa la libreria Google Charts necessaria per i grafici -->
+
+    <script>
+        // Flask passerà qui il park_id
+        const parkId = "{{ park_id }}";
+        // Variabile per memorizzare l'id del parcheggio passato da Flask (template)
+
+        const city = 'norfolk';
+        // Variabile fissa per la città di interesse (Norfolk)
+    </script>
+
+    <style>
+        #dateInput, #timeInput {
+            color: black;
+        }
+    </style>
+    <!-- Stile inline per rendere testo nero negli input data e ora -->
+
+    <script>
+        google.charts.load('current', { packages: ['corechart', 'line'] });
+        // Carica il pacchetto 'corechart' e 'line' di Google Charts
+
+        google.charts.setOnLoadCallback(loadParkList);
+        // Quando Google Charts è pronto, chiama la funzione loadParkList
+
+        // Carica la lista parcheggi e inizializza il grafico
+        function loadParkList() {
+            const city = 'norfolk';
+            // Ridefinizione variabile city (locale a questa funzione)
+
+            fetch(`/sensors/${city}/list`)
+            // Effettua una richiesta per ottenere la lista dei parcheggi della città
+
+                .then(response => response.json())
+                // Converte la risposta in JSON
+
+                .then(parks => {
+                    const select = document.getElementById('parkSelect');
+                    // Ottiene il menu a tendina per selezionare il parcheggio
+
+                    parks.forEach(park => {
+                        const option = document.createElement('option');
+                        // Crea un nuovo elemento option
+
+                        option.value = park;
+                        // Imposta il valore option come il nome/id del parcheggio
+
+                        option.textContent = park;
+                        // Imposta il testo visibile dell’option
+
+                        if (park === parkId) {
+                            option.selected = true;
+                            // Se il parcheggio corrisponde a parkId, lo seleziona di default
+                        }
+
+                        select.appendChild(option);
+                        // Aggiunge l’opzione al menu a tendina
+                    });
+
+                    // Disegna subito il grafico per parkId (se non nullo), altrimenti per il primo:
+                    const defaultPark = parkId || parks[0];
+                    drawChart(defaultPark);
+                    // Chiama drawChart per il parcheggio selezionato o il primo della lista
+                })
+
+                .catch(error => console.error('Errore nel caricamento della lista parcheggi:', error));
+                // Gestione errori in caso di fallimento della fetch
+        }
+
+        // Disegna il grafico per il parcheggio selezionato
+        function drawChart(selectedParkId) {
+            // 1. Carica dati storici
+            fetch(`/sensors/${city}/${selectedParkId}`)
+            // Richiede i dati storici per il parcheggio selezionato
+
+                .then(response => response.json())
+                // Converte la risposta in JSON
+
+                .then(historicalData => {
+                    // 2. Carica la previsione futura
+                    fetch(`/forecast_week/${city}/${selectedParkId}`)
+                    // Richiede i dati di previsione futura per il parcheggio
+
+                        .then(response => response.json())
+                        // Converte la risposta in JSON
+
+                        .then(forecastData => {
+                            const dataTable = new google.visualization.DataTable();
+                            // Crea una nuova tabella dati per Google Charts
+
+                            dataTable.addColumn('datetime', 'Data');
+                            dataTable.addColumn('number', 'Disponibili');
+                            dataTable.addColumn('number', 'Occupati');
+                            dataTable.addColumn('number', 'Capacità');
+                            dataTable.addColumn('number', 'Previsione futura');
+                            // Definisce le colonne della tabella dati con i relativi tipi e nomi
+
+                            const rows = [];
+                            // Array per contenere tutte le righe da aggiungere
+
+                            // Dati storici
+                            historicalData.forEach(entry => {
+                                const iso = entry.data.replace(' ', 'T');
+                                // Converte data da formato stringa con spazio in ISO con 'T'
+
+                                rows.push([
+                                    new Date(iso),
+                                    entry.availability,
+                                    entry.occupancy,
+                                    entry.capacity,
+                                    null // Nessuna previsione futura per i dati storici
+                                ]);
+                                // Aggiunge riga dati storici, l’ultima colonna è nulla per non avere previsione futura qui
+                            });
+
+                            // Dati di forecast futura
+                            if (forecastData.forecast) {
+                                forecastData.forecast.forEach(entry => {
+                                    rows.push([
+                                        new Date(entry.data),
+                                        null, // Nessun dato storico
+                                        null,
+                                        null,
+                                        entry.forecast // Solo previsione futura
+                                    ]);
+                                    // Aggiunge righe di previsione futura, solo ultima colonna valorizzata
+                                });
+                            }
+
+                            dataTable.addRows(rows);
+                            // Aggiunge tutte le righe nella tabella dati
+
+                            const options = {
+                                hAxis: { title: 'Data e orario', format: 'yyyy-MM-dd HH:mm' },
+                                // Impostazioni asse orizzontale con titolo e formato data/ora
+
+                                vAxis: { title: 'Posti' },
+                                // Impostazioni asse verticale con titolo
+
+                                legend: { position: 'bottom' },
+                                // Posiziona legenda in basso
+
+                                colors: ['green', 'orange', 'blue', 'red'],
+                                // Definisce colori delle serie dati
+
+                                series: {
+                                    3: { lineDashStyle: [4, 4] }
+                                    // Serie indice 3 (previsione futura) con linea tratteggiata
+                                }
+                            };
+
+                            const chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                            // Crea il grafico LineChart nell’elemento con id 'chart_div'
+
+                            chart.draw(dataTable, options);
+                            // Disegna il grafico con i dati e le opzioni specificate
+                        });
+                });
+        }
+
+        //Listener  
+        document.addEventListener('DOMContentLoaded', function () {
+            // Quando il DOM è completamente caricato
+
+            document.getElementById('parkSelect').addEventListener('change', function () {
+                // Aggiunge un listener sul select per il cambio di valore
+
+                drawChart(this.value);
+                // Ridisegna il grafico per il parcheggio selezionato
+
+                // Aggiorna l'URL senza ricaricare la pagina
+                const newUrl = `${window.location.pathname}?parkId=${this.value}`;
+                // Costruisce nuova URL con query param parkId
+
+                window.history.replaceState({}, '', newUrl);
+                // Modifica la URL nella barra senza ricaricare la pagina
+            });
+        });
+
+        // Aggiorna automaticamente il grafico ogni 60 secondi (60000 ms)
+        setInterval(() => {
+            const currentPark = document.getElementById('parkSelect').value;
+            // Ottiene il parcheggio attualmente selezionato
+
+            drawChart(currentPark);
+            // Ridisegna il grafico con dati aggiornati
+        }, 60000);
+    </script>
+</head>
+
+<body class="is-preload">
+    <!-- Corpo della pagina, con classe per preload -->
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+        <!-- Contenitore principale della pagina -->
+
+        <!-- Header -->
+        <header id="header">
+            <a href="index.html" class="logo"><strong>TROVA</strong> <span>il tuo parcheggio</span></a>
+            <!-- Link di intestazione con logo e testo -->
+        </header>
+
+        <!-- Main -->
+        <div id="main" class="alt">
+            <section id="one">
+                <div class="inner">
+
+                    <a href="{{ url_for('map_nork') }}" style="display:inline-block; margin-bottom: 1rem; font-size: 1rem;">
+                        ← Torna alla mappa di Norfolk
+                    </a>
+                    <!-- Link per tornare alla mappa di Norfolk -->
+
+                    <header class="major">
+                        <h1>Grafico Parcheggi</h1>
+                        <!-- Titolo principale -->
+
+                        <label for="parkSelect"><strong>Seleziona un parcheggio:</strong></label>
+                        <!-- Etichetta per il menu a tendina -->
+
+                        <select id="parkSelect" style="margin-bottom: 20px;"></select>
+                        <!-- Menu a tendina per la selezione del parcheggio (vuoto, riempito da JS) -->
+                    </header>
+
+                    <!-- Grafico Google Charts -->
+                    <div id="chart_div" style="width: 100%; height: 500px;"></div>
+                    <!-- Contenitore dove sarà disegnato il grafico -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <ul class="icons">
+                    <li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+                </ul>
+                <!-- Lista di icone social nel footer -->
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="../static/assets/js/jquery.min.js"></script>
+    <script src="../static/assets/js/jquery.scrolly.min.js"></script>
+    <script src="../static/assets/js/jquery.scrollex.min.js"></script>
+    <script src="../static/assets/js/browser.min.js"></script>
+    <script src="../static/assets/js/breakpoints.min.js"></script>
+    <script src="../static/assets/js/util.js"></script>
+    <script src="../static/assets/js/main.js"></script>
+    <!-- Inclusione di vari script JS per funzionalità e interazioni -->
+
+</body>
+</html>

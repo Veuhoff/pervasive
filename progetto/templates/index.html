@@ -1,0 +1,189 @@
+<!DOCTYPE HTML>
+<!-- Tipo di documento: HTML5 -->
+
+<html lang="it">
+<!-- Imposta la lingua del documento in italiano -->
+
+<head>
+    <title>SMARK</title> <!-- Titolo della pagina visualizzato nella scheda del browser -->
+    <meta charset="utf-8" /> <!-- Imposta la codifica dei caratteri su UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <!-- Imposta la viewport per il responsive design, disabilita lo zoom -->
+
+    <link rel="stylesheet" href="../static/assets/css/main.css" />
+    <!-- Collegamento al foglio di stile principale -->
+
+    <noscript>
+        <link rel="stylesheet" href="../static/assets/css/noscript.css" />
+        <!-- Stile alternativo se JavaScript è disattivato -->
+    </noscript>
+</head>
+
+<body class="is-preload">
+<!-- Corpo della pagina, con classe per animazioni preload -->
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+        <!-- Contenitore principale della pagina -->
+
+        <!-- Header -->
+        <header id="header">
+            <!-- Intestazione della pagina -->
+            <a href="{{ url_for('index') }}" class="logo">
+                <!-- Logo cliccabile che rimanda alla homepage -->
+                <strong>TROVA</strong> <span>il tuo parcheggio</span>
+            </a>
+        </header>
+
+        <!-- Main -->
+        <div id="main" class="alt">
+            <!-- Sezione principale alternativa -->
+            <section id="one">
+                <!-- Prima sezione -->
+                <div class="inner">
+                    <!-- Contenitore interno per padding -->
+                    <header style="position: relative; display: flex; align-items: center; padding: 10px 20px;">
+                        <h1 style="margin: 0;">Log In</h1>
+                        <a href="https://t.me/parkinguk25_bot" class="button" 
+                            style="
+                            position: absolute;
+                            right: 20px;
+                            background-color: white;
+                            color: #333;
+                            font-size: 1rem;
+                            padding: 0.6em 1.2em;
+                            text-decoration: none;
+                            border: 1px solid #ccc;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                            ">
+                            Parla con il bot <img src="/static/images/chat-bot.png" alt="Icona" style="height: 40px; width: auto;" />
+                        </a>
+                    </header>
+                </div>
+            </section>
+        </div>
+
+        <!-- Login, Register, Forgot Password -->
+        <section id="auth">
+            <!-- Sezione per autenticazione -->
+            <div class="inner">
+                <!-- Contenitore interno -->
+
+                <!-- Nav Tabs -->
+                <ul class="actions fit">
+                    <!-- Pulsanti per passare tra i form -->
+                    <li><button onclick="showForm('login-form')" class="button primary">Accedi</button></li>
+                    <li><button onclick="showForm('register-form')" class="button">Registrati</button></li>
+                    <li><button onclick="showForm('forgot-form')" class="button">Password dimenticata</button></li>
+                </ul>
+
+                <!-- Login Form -->
+                <section id="login-form" class="auth-form">
+                    <!-- Form di login -->
+                    {% if error %}
+                    <!-- Controlla se esiste un messaggio di errore -->
+                    <div style="color: rgb(255, 47, 47);"> CREDENZIALI ERRATE </div>
+                    <!-- Messaggio di errore -->
+                    {% endif %}
+                    <form action="{{ url_for('reqpar') }}" method="post">
+                        <!-- Form invia POST a reqpar -->
+                        <div class="fields">
+                            <!-- Contenitore campi -->
+                            <div class="field">
+                                <label for="login-name">Username</label>
+                                <input type="text" name="username" id="login-name" required />
+                            </div>
+                            <div class="field">
+                                <label for="login-password">Password</label>
+                                <input type="password" name="password" id="login-password" required />
+                            </div>
+                        </div>
+                        <ul class="actions">
+                            <li><input type="submit" value="Accedi" class="primary" /></li>
+                        </ul>
+                    </form>
+                </section>
+
+                <!-- Register Form -->
+                <section id="register-form" class="auth-form" style="display: none;">
+                    <!-- Form di registrazione nascosto inizialmente -->
+                    <form action="{{ url_for('register') }}" method="post">
+                        <div class="fields">
+                            <div class="field">
+                                <label for="reg-name">Username</label>
+                                <input type="text" name="username" id="reg-name" required />
+                            </div>
+                            <div class="field">
+                                <label for="reg-email">Email</label>
+                                <input type="email" name="email" id="reg-email" required />
+                            </div>
+                            <div class="field">
+                                <label for="reg-password">Password</label>
+                                <input type="password" name="password" id="reg-password" required />
+                            </div>
+                        </div>
+                        <ul class="actions">
+                            <li><input type="submit" value="Registrati" class="primary" /></li>
+                        </ul>
+                    </form>
+                </section>
+
+                <!-- Forgot Password Form -->
+                <section id="forgot-form" class="auth-form" style="display: none;">
+                    <!-- Form per recupero password nascosto inizialmente -->
+                    <form action="{{ url_for('recover') }}" method="post">
+                        <div class="fields">
+                            <div class="field">
+                                <label for="forgot-email">Inserisci la tua email</label>
+                                <input type="email" name="email" id="forgot-email" required />
+                            </div>
+                        </div>
+                        <ul class="actions">
+                            <li><input type="submit" value="Recupera password" class="primary" /></li>
+                        </ul>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <!-- Piè di pagina -->
+            <div class="inner">
+                <ul class="icons">
+                    <!-- Icone social media -->
+                    <li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+                </ul>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Scripts -->
+    <!-- Collegamenti a file JavaScript -->
+    <script src="../static/assets/js/jquery.min.js"></script>
+    <script src="../static/assets/js/jquery.scrolly.min.js"></script>
+    <script src="../static/assets/js/jquery.scrollex.min.js"></script>
+    <script src="../static/assets/js/browser.min.js"></script>
+    <script src="../static/assets/js/breakpoints.min.js"></script>
+    <script src="../static/assets/js/util.js"></script>
+    <script src="../static/assets/js/main.js"></script>
+
+    <script>
+        // Funzione per mostrare il form selezionato e nascondere gli altri
+        function showForm(formId) {
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.style.display = 'none'; // Nasconde tutti i form
+            });
+            document.getElementById(formId).style.display = 'block'; // Mostra il form selezionato
+        }
+    </script>
+
+</body>
+</html>

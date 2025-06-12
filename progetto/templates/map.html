@@ -1,0 +1,153 @@
+<!DOCTYPE HTML> <!-- Dichiara il tipo di documento HTML5 -->
+
+<html>
+<head>
+    <title>SMARK</title> <!-- Titolo della pagina nel browser -->
+    
+    <meta charset="utf-8" /> <!-- Imposta la codifica dei caratteri a UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <!-- Imposta il viewport per la responsività, disabilitando lo zoom manuale -->
+
+    <!-- Collegamento al foglio di stile principale tramite Jinja2 (Flask) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/main.css') }}">
+
+    <!-- Collegamento al foglio di stile di Leaflet (mappa) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+
+    <!-- Foglio di stile alternativo se JavaScript è disabilitato -->
+    <noscript>
+        <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/noscript.css') }}" />
+    </noscript>
+</head>
+
+<body class="is-preload"> <!-- Corpo della pagina con classe per effetti iniziali -->
+
+    <!-- Wrapper: contenitore principale della pagina -->
+    <div id="wrapper">
+
+        <!-- Header: intestazione con logo e link alla home -->
+        <header id="header">
+            <a href="index.html" class="logo">
+                <strong>TROVA</strong> <span>il tuo parcheggio</span>
+            </a>
+        </header>
+
+        <!-- Main: contenuto principale -->
+        <div id="main" class="alt">
+            <section id="one">
+                <div class="inner">
+                    <!-- Titolo della sezione -->
+                    <header class="major">
+                        <h1>Mappa Parcheggi</h1>
+
+                        <!-- Selezione città -->
+                        <div class="field third">
+                            <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+                                Seleziona una città
+                            </label>
+
+                            <!-- Pulsanti città -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 100px 118px;">
+                                <a href="#" onclick="goToCity('birmingham')" class="button primary" style="min-width: 200px; text-align: center;">Birmingham</a>
+                                <a href="#" onclick="goToCity('norfolk')" class="button primary" style="min-width: 200px; text-align: center;">Norfolk</a>
+                                <a href="#" onclick="goToCity('nottingham')" class="button primary" style="min-width: 200px; text-align: center;">Nottingham</a>
+                                <a href="#" onclick="goToCity('glasgow')" class="button primary" style="min-width: 200px; text-align: center;">Glasgow</a>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Div mappa Leaflet -->
+                    <div id="mapid" style="width: 95%; height: 500px; margin-top: 2rem;"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Script Leaflet -->
+        <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+        <script>
+            // Inizializza la mappa centrata sul Regno Unito
+            var map = L.map('mapid').setView([53.5, -2], 6);
+
+            // Aggiunge le tile di OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // Città con relative coordinate
+            var cities = [
+                { name: "Birmingham", coords: [52.4862, -1.8904] },
+                { name: "Nottingham", coords: [52.9548, -1.1581] },
+                { name: "Glasgow", coords: [55.8642, -4.2518] },
+                { name: "Norfolk", coords: [52.6309, 1.2974] } // Norwich rappresenta Norfolk
+            ];
+
+            // Coordinate per la polilinea tra le città
+            var polylineCoords = cities.map(city => city.coords);
+            polylineCoords.push(cities[0].coords); // Chiude il ciclo tornando a Birmingham
+
+            // Aggiunge la polilinea alla mappa
+            L.polyline(polylineCoords, {
+                color: 'blue',
+                weight: 3,
+                opacity: 0.7,
+                smoothFactor: 1
+            }).addTo(map);
+
+            // Definizione dell'icona personalizzata per le città
+            var cityIcon = L.icon({
+                iconUrl: '/static/images/bigcity.png',  // Percorso dell'icona
+                iconSize: [32, 32],        // Dimensione dell'icona
+                iconAnchor: [16, 32],      // Punto di ancoraggio dell'icona
+                popupAnchor: [0, -32]      // Punto da cui si apre il popup
+            });
+
+            // Aggiunta dei marker con icona per ogni città
+            L.marker([52.4862, -1.8904], { icon: cityIcon }).addTo(map); // Birmingham
+            L.marker([52.9548, -1.1581], { icon: cityIcon }).addTo(map); // Nottingham
+            L.marker([55.8642, -4.2518], { icon: cityIcon }).addTo(map); // Glasgow
+            L.marker([52.6309, 1.2974],  { icon: cityIcon }).addTo(map); // Norfolk
+        </script>
+
+        <!-- Footer della pagina con icone social -->
+        <footer id="footer">
+            <div class="inner">
+                <ul class="icons">
+                    <li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+                    <li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+                </ul>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script di librerie JS usate nel tema -->
+    <script src="../static/assets/js/jquery.min.js"></script>
+    <script src="../static/assets/js/jquery.scrolly.min.js"></script>
+    <script src="../static/assets/js/jquery.scrollex.min.js"></script>
+    <script src="../static/assets/js/browser.min.js"></script>
+    <script src="../static/assets/js/breakpoints.min.js"></script>
+    <script src="../static/assets/js/util.js"></script>
+    <script src="../static/assets/js/main.js"></script>
+
+    <!-- Funzione per il reindirizzamento a una città selezionata -->
+    <script>
+        function goToCity(city) {
+            // Mappa città -> URL
+            const routeMap = {
+                birmingham: "/mapbir",
+                norfolk: "/mapnork",
+                nottingham: "/mapnott",
+                glasgow: "/mapglas"
+            };
+
+            // Reindirizza se la città esiste nella mappa
+            if (routeMap[city]) {
+                window.location.href = routeMap[city];
+            } else {
+                alert("Città non trovata!"); // Fallback
+            }
+        }
+    </script>
+
+</body>
+</html>
