@@ -32,9 +32,12 @@ mqtt = Mqtt(app)
 
 # Inizializza Firestore
 db = firestore.Client.from_service_account_json(
-    r"firestore1\\credentials.json",
+    #r"firestore1\\credentials.json",
+    'credentials.json',
     database='smartpark'
 )
+
+
 
 
 # --------------------- ROUTE HTML ---------------------
